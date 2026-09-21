@@ -253,7 +253,13 @@ function acknowledge(): void {
 }
 
 function applySettings(next: Settings): void {
-  settings = next
+  // Abgetippte URLs und Token schleppen gern Leerzeichen mit.
+  settings = {
+    ...next,
+    relayUrl: next.relayUrl.trim(),
+    clientToken: next.clientToken.trim(),
+    localListener: { ...next.localListener, token: next.localListener.token.trim() }
+  }
   saveSettings(settings)
 
   if (settings.relayUrl && settings.clientToken) {

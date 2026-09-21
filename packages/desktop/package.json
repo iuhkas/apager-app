@@ -1,6 +1,7 @@
 {
   "name": "@apager/desktop",
   "version": "0.1.0",
+  "productName": "aPager Monitor",
   "private": true,
   "type": "module",
   "main": "./out/main/index.js",
