@@ -1,5 +1,5 @@
 import { createServer, type Server } from 'node:http'
-import { buildAlarmEvent, flatten, type AlarmEvent } from '@apager/shared'
+import { DEFAULT_INGEST_HEADER, buildAlarmEvent, flatten, type AlarmEvent } from '@apager/shared'
 
 /**
  * Fallback fuer den Betrieb im eigenen WLAN: aPager PRO kann den Webhook
@@ -12,7 +12,15 @@ export class LocalServer {
     this.stop()
     this.server = createServer((req, res) => {
       const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
-      if (!url.pathname.startsWith('/hook/') || url.pathname.slice(6) !== token) {
+      if (!url.pathname.startsWith('/hook')) {
+        res.writeHead(404).end('not found')
+        return
+      }
+      // Wie beim Relay: Token im Header oder als Rueckfallebene im Pfad.
+      const header = req.headers[DEFAULT_INGEST_HEADER]
+      const fromPath = url.pathname.startsWith('/hook/') ? url.pathname.slice(6) : undefined
+      const presented = typeof header === 'string' ? header : fromPath
+      if (presented !== token) {
         res.writeHead(401).end('unauthorized')
         return
       }

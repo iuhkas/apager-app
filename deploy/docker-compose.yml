@@ -11,7 +11,9 @@ services:
     environment:
       DATA_DIR: /data
     volumes:
-      - relay-data:/data
+      # Bind-Mount statt Volume: das Alarm-Log liegt direkt im Dateisystem und
+      # laesst sich ohne Docker sichern, ansehen oder loeschen.
+      - ${DATA_HOST_DIR:-/opt/apager/data}:/data
     expose:
       - '8080'
 
@@ -32,6 +34,5 @@ services:
       - relay
 
 volumes:
-  relay-data:
   caddy-data:
   caddy-config:
