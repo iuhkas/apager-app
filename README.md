@@ -85,13 +85,19 @@ DNS-A-Record der Domain auf den Server zeigen lassen, dann:
 
 ```bash
 git clone <dieses Repo> && cd apager-app/deploy
-cp .env.example .env         # RELAY_DOMAIN und beide Tokens setzen
+cp .env.example .env         # beide Tokens setzen
+docker network create edge   # einmalig, falls noch nicht vorhanden
 docker compose up -d --build
 ```
 
-Caddy holt das TLS-Zertifikat automatisch und terminiert HTTPS; der Relay
-selbst lauscht nur intern auf Port 8080. Das Alarm-Log liegt im Volume
-`relay-data`. Tokens erzeugen z. B. mit `openssl rand -hex 24`.
+HTTPS terminiert der gemeinsame Edge-Proxy des Servers (Caddy in `/opt/edge`),
+weil dort mehrere Domains auf denselben Ports liegen. Er holt das Zertifikat
+automatisch und erreicht den Relay über das externe Docker-Netzwerk `edge`
+unter dem Namen `apager-relay`; der Relay selbst lauscht nur intern auf Port
+8080. Die Domain steht in `/opt/edge/sites/apager.caddy`.
+
+Das Alarm-Log liegt als Bind-Mount unter `DATA_HOST_DIR` (Standard
+`/opt/apager/data`). Tokens erzeugen z. B. mit `openssl rand -hex 24`.
 
 | Endpunkt | Auth | Zweck |
 | --- | --- | --- |

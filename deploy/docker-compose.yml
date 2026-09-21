@@ -1,6 +1,17 @@
 # Deployment auf dem Hetzner-Server (aus diesem Verzeichnis heraus):
 #   cp .env.example .env   &&  Werte anpassen (Tokens: openssl rand -hex 24)
 #   docker compose up -d --build
+#
+# HTTPS terminiert dieses Projekt nicht mehr selbst. Auf dem Server laeuft
+# dafuer ein gemeinsamer Edge-Proxy (Caddy) in /opt/edge, der Port 80/443
+# haelt und alle Domains des Servers bedient. Er erreicht den Relay ueber
+# das externe Docker-Netzwerk "edge" unter dem Namen "apager-relay".
+#
+# Einmalige Voraussetzung auf dem Server:
+#   docker network create edge
+#
+# Die Domain (apager.luhkas.de) steht in /opt/edge/sites/apager.caddy,
+# nicht mehr hier. Uebersicht: /root/SERVER.md
 services:
   relay:
     build:
@@ -16,23 +27,11 @@ services:
       - ${DATA_HOST_DIR:-/opt/apager/data}:/data
     expose:
       - '8080'
+    networks:
+      edge:
+        aliases:
+          - apager-relay
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - '80:80'
-      - '443:443'
-    environment:
-      # Domain, die auf den Hetzner-Server zeigt - Caddy holt das Zertifikat automatisch.
-      RELAY_DOMAIN: ${RELAY_DOMAIN}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    depends_on:
-      - relay
-
-volumes:
-  caddy-data:
-  caddy-config:
+networks:
+  edge:
+    external: true
