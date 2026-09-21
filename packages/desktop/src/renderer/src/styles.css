@@ -1,0 +1,289 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --line: #262a33;
+  --text: #e8eaee;
+  --muted: #9aa1ad;
+  --accent: #3b82f6;
+  --alarm: #dc2626;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    14px/1.5 -apple-system,
+    'Segoe UI',
+    system-ui,
+    sans-serif;
+  user-select: none;
+}
+
+button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button.primary,
+button.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+input {
+  background: #0c0e12;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+input[type='checkbox'] {
+  width: auto;
+}
+
+.app {
+  padding: 20px 24px 32px;
+}
+
+.app__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.app__head h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.app__head nav {
+  display: flex;
+  gap: 8px;
+}
+
+.status {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: var(--muted);
+}
+
+.status--online::before {
+  background: #22c55e;
+}
+
+.status--offline::before {
+  background: #f59e0b;
+}
+
+.status--connecting::before {
+  background: var(--accent);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.row--actions {
+  margin-bottom: 16px;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.history li {
+  display: grid;
+  grid-template-columns: 150px 1fr 200px 70px;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  align-items: center;
+}
+
+.history li:last-child {
+  border-bottom: none;
+}
+
+.history__time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.history__keyword {
+  font-weight: 600;
+}
+
+.history__unit {
+  color: var(--muted);
+}
+
+.history__source {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-align: right;
+}
+
+.history__source--test {
+  color: #f59e0b;
+}
+
+.settings {
+  display: grid;
+  gap: 14px;
+  max-width: 620px;
+}
+
+.settings label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.settings label.row {
+  display: flex;
+  color: var(--text);
+}
+
+.settings fieldset {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.settings legend {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0;
+  word-break: break-all;
+}
+
+.alarm {
+  min-height: 100vh;
+  background: var(--alarm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px;
+  gap: 18px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    background: #dc2626;
+  }
+  50% {
+    background: #b91c1c;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alarm {
+    animation: none;
+  }
+}
+
+.alarm__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alarm__unit {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.alarm__clock {
+  font-size: 15px;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+.alarm__keyword {
+  font-size: clamp(38px, 9vw, 86px);
+  line-height: 1.05;
+  margin: 0;
+  font-weight: 800;
+}
+
+.alarm__badge {
+  margin: 0;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.alarm__ack {
+  margin-top: 10px;
+  background: #fff;
+  color: #b91c1c;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 14px 40px;
+  border-radius: 10px;
+}

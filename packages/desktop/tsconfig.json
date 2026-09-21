@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["node"],
+    "paths": {
+      "@apager/shared": ["../shared/src/index.ts"]
+    }
+  },
+  "include": ["src", "electron.vite.config.ts", "../shared/src"]
+}

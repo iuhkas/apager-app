@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+release/
+*.log
+.env
+.DS_Store
+
+# IDE
+.idea/

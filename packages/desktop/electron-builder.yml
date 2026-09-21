@@ -1,0 +1,22 @@
+appId: de.loom.apager.monitor
+productName: aPager Monitor
+directories:
+  output: release
+  buildResources: resources
+files:
+  - out/**
+  - package.json
+mac:
+  category: public.app-category.utilities
+  target:
+    - dmg
+    - zip
+  # Fuer die Verteilung: hardenedRuntime + notarize mit Apple-Developer-ID.
+  hardenedRuntime: true
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true

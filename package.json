@@ -1,0 +1,17 @@
+{
+  "name": "apager-app",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:relay": "npm run dev -w @apager/relay",
+    "dev:desktop": "npm run dev -w @apager/desktop",
+    "build:desktop": "npm run build -w @apager/desktop",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
