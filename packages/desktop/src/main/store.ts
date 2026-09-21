@@ -9,16 +9,17 @@ function historyPath(): string {
   return join(app.getPath('userData'), 'history.json')
 }
 
-export function loadHistory(retentionDays: number): AlarmEvent[] {
-  let entries: AlarmEvent[] = []
+/**
+ * Lokaler Zwischenspeicher der zuletzt empfangenen Einsaetze. Nichts verfaellt
+ * nach Zeit - die vollstaendige Aufzeichnung liegt im Alarm-Log des Relays.
+ */
+export function loadHistory(): AlarmEvent[] {
   try {
-    entries = JSON.parse(readFileSync(historyPath(), 'utf8')) as AlarmEvent[]
+    const entries = JSON.parse(readFileSync(historyPath(), 'utf8')) as AlarmEvent[]
+    return entries.slice(0, MAX_ENTRIES)
   } catch {
     return []
   }
-  if (retentionDays <= 0) return entries.slice(0, MAX_ENTRIES)
-  const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000
-  return entries.filter((entry) => Date.parse(entry.receivedAt) >= cutoff).slice(0, MAX_ENTRIES)
 }
 
 export function saveHistory(entries: AlarmEvent[]): void {

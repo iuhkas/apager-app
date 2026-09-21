@@ -17,8 +17,6 @@ export interface Settings {
   playSound: boolean
   /** Nur diese Einheiten anzeigen; leer = alle. */
   unitFilter: string[]
-  /** Historie aelter als X Tage wird beim Start verworfen. */
-  retentionDays: number
 }
 
 export const defaultSettings: Settings = {
@@ -27,8 +25,7 @@ export const defaultSettings: Settings = {
   localListener: { enabled: false, port: 8099, token: 'lokal-bitte-aendern' },
   autoDismissMinutes: 15,
   playSound: true,
-  unitFilter: [],
-  retentionDays: 90
+  unitFilter: []
 }
 
 function configPath(): string {
@@ -38,11 +35,15 @@ function configPath(): string {
 export function loadSettings(): Settings {
   try {
     const raw = JSON.parse(readFileSync(configPath(), 'utf8')) as Partial<Settings>
-    return {
+    const merged = {
       ...defaultSettings,
       ...raw,
       localListener: { ...defaultSettings.localListener, ...raw.localListener }
     }
+    // Altlast: die Aufbewahrungsdauer der lokalen Historie ist entfallen,
+    // massgeblich ist das dauerhafte Alarm-Log auf dem Relay.
+    delete (merged as Record<string, unknown>).retentionDays
+    return merged
   } catch {
     return { ...defaultSettings }
   }

@@ -35,8 +35,10 @@ ist die Einsatzhistorie auch dann vollständig, wenn der Rechner aus war.
 - Nach einer Downtime lädt die App über `GET /alarms` nach. Alarme, die älter
   als fünf Minuten sind, landen still in der Historie und reißen den
   Alarmbildschirm **nicht** mehr auf (aPager sendet keine Entwarnung).
-- `LOG_RETENTION_DAYS` kappt das Log beim Start.
-- Die App exportiert ihre Historie als CSV (Semikolon-getrennt, mit BOM für Excel).
+- `LOG_RETENTION_DAYS` kappt das Log beim Start; `0` bedeutet: nichts verfällt,
+  geloescht wird von Hand.
+- Die App haelt nur die letzten 500 Einsaetze als lokalen Zwischenspeicher und
+  exportiert sie als CSV (Semikolon-getrennt, mit BOM für Excel).
 
 ## Entwicklung
 
@@ -117,9 +119,9 @@ Info-/Status-Meldungen.
 
 ## Datenschutz
 
-Einheit und Stichwort liegen im Alarm-Log des Relays und lokal in
-`history.json` im Benutzerprofil; beide Aufbewahrungsdauern sind konfigurierbar
-(Standard: 365 Tage Server, 90 Tage App).
+Einheit und Stichwort liegen im Alarm-Log des Relays (`alarms.jsonl`, wird
+standardmaessig nicht automatisch geloescht) und als Zwischenspeicher der
+letzten 500 Einsaetze lokal in `history.json` im Benutzerprofil.
 
 ## Offen / nächste Schritte
 

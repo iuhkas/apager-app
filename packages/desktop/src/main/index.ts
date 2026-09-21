@@ -308,7 +308,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', () => showWindow())
 
   void app.whenReady().then(() => {
-    history = loadHistory(settings.retentionDays)
+    history = loadHistory()
     saveHistory(history)
 
     relay.on('alarm', ingest)

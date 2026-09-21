@@ -253,14 +253,11 @@ function SettingsView({ settings }: { settings: Settings }): React.ReactElement 
           }
         />
       </label>
-      <label>
-        Historie aufbewahren (Tage)
-        <input
-          type="number"
-          value={draft.retentionDays}
-          onChange={(event) => update('retentionDays', Number(event.target.value))}
-        />
-      </label>
+      <p className="hint">
+        Die Historie hält die letzten 500 Einsätze. Die vollständige, dauerhafte
+        Aufzeichnung liegt im Alarm-Log des Relays.
+      </p>
+
       <label className="row">
         <input
           type="checkbox"
