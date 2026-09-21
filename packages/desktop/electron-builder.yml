@@ -6,6 +6,8 @@ productName: aPager Monitor
 # Die App hat keine Runtime-Dependencies (ws wird in den Main-Bundle gebaut),
 # deshalb ist dieser Schritt ohnehin ueberfluessig.
 npmRebuild: false
+# Leerzeichen im Dateinamen machen Skripten und Download-URLs das Leben schwer.
+artifactName: aPagerMonitor-${version}-${arch}.${ext}
 directories:
   output: release
   buildResources: resources

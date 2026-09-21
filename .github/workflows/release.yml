@@ -64,5 +64,13 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" \
             --repo "${GITHUB_REPOSITORY}" \
             --title "aPager Monitor ${GITHUB_REF_NAME}" \
-            --notes "Installer fuer Windows (.exe) und macOS (.dmg). Beide sind unsigniert: Windows zeigt eine SmartScreen-Warnung, macOS verlangt beim ersten Start Rechtsklick und Oeffnen." \
-            $(find pakete -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \))
+            --notes "Installer fuer Windows (.exe) und macOS (.dmg). Beide sind unsigniert: Windows zeigt eine SmartScreen-Warnung, macOS verlangt beim ersten Start Rechtsklick und Oeffnen."
+
+          # -print0/xargs -0, damit Leerzeichen in Dateinamen nicht zerlegt werden.
+          find pakete -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \) -print0 \
+            | xargs -0 -I{} gh release upload "${GITHUB_REF_NAME}" "{}" \
+                --repo "${GITHUB_REPOSITORY}" --clobber
+
+          echo "Angehaengte Dateien:"
+          gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --json assets \
+            --jq '.assets[] | "  \(.name)  \(.size/1048576|floor) MB"'
