@@ -1,19 +1,34 @@
 appId: de.loom.apager.monitor
 productName: aPager Monitor
+# In einem npm-Workspace wuerde electron-builder vor dem Packen ein
+# "npm install --production" im App-Verzeichnis ausfuehren - das prunt den
+# gemeinsamen Root-Baum und loescht dabei seine eigenen Build-Abhaengigkeiten.
+# Die App hat keine Runtime-Dependencies (ws wird in den Main-Bundle gebaut),
+# deshalb ist dieser Schritt ohnehin ueberfluessig.
+npmRebuild: false
 directories:
   output: release
   buildResources: resources
 files:
   - out/**
   - package.json
+# Die Tray-Icons werden zur Laufzeit ueber process.resourcesPath geladen und
+# muessen deshalb explizit ins Paket - buildResources allein reicht nicht.
+extraResources:
+  - from: resources
+    to: .
+    filter:
+      - tray-*.png
 mac:
   category: public.app-category.utilities
+  icon: resources/icon.icns
   target:
     - dmg
     - zip
   # Fuer die Verteilung: hardenedRuntime + notarize mit Apple-Developer-ID.
   hardenedRuntime: true
 win:
+  icon: resources/icon.png
   target:
     - nsis
 nsis:

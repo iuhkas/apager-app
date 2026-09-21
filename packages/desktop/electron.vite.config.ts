@@ -7,7 +7,13 @@ const shared = resolve(__dirname, '../shared/src/index.ts')
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
-    resolve: { alias: { '@apager/shared': shared } }
+    resolve: { alias: { '@apager/shared': shared } },
+    build: {
+      rollupOptions: {
+        // Optionale Native-Module von ws; ws laeuft ohne sie.
+        external: ['bufferutil', 'utf-8-validate']
+      }
+    }
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
