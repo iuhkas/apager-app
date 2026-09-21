@@ -1,5 +1,5 @@
-# Deployment auf dem Hetzner-Server:
-#   cp ../packages/relay/.env.example .env  &&  Werte anpassen
+# Deployment auf dem Hetzner-Server (aus diesem Verzeichnis heraus):
+#   cp .env.example .env   &&  Werte anpassen (Tokens: openssl rand -hex 24)
 #   docker compose up -d --build
 services:
   relay:
