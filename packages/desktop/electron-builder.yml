@@ -22,6 +22,10 @@ extraResources:
 mac:
   category: public.app-category.utilities
   icon: resources/icon.icns
+  # Hintergrund-/Tray-App: kein Dock-Icon, kein Eintrag im App-Umschalter.
+  # Sobald ein Fenster gebraucht wird, blendet die App das Dock-Icon selbst ein.
+  extendInfo:
+    LSUIElement: true
   target:
     - dmg
     - zip

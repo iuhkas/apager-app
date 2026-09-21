@@ -49,6 +49,17 @@ let window: BrowserWindow | null = null
 let tray: Tray | null = null
 let quitting = false
 
+/**
+ * Beim Autostart soll kein Fenster aufgehen. Windows erkennt das am Argument
+ * aus dem Registry-Eintrag, macOS meldet es ueber wasOpenedAtLogin.
+ */
+const AUTOSTART_ARGS = ['--hidden']
+
+function startedByLogin(): boolean {
+  if (process.argv.includes('--hidden')) return true
+  return app.getLoginItemSettings({ args: AUTOSTART_ARGS }).wasOpenedAtLogin === true
+}
+
 function resource(name: string): string {
   return app.isPackaged
     ? join(process.resourcesPath, name)
@@ -312,8 +323,10 @@ if (!app.requestSingleInstanceLock()) {
     buildTray()
     applySettings(settings)
 
-    // Ohne Konfiguration ist die App nutzlos - dann Fenster zeigen.
-    if (!settings.relayUrl && !settings.localListener.enabled) showWindow()
+    // Beim Autostart bleibt die App unsichtbar im Hintergrund. Nur beim
+    // manuellen Start ohne Konfiguration hat ein Fenster einen Zweck.
+    const unconfigured = !settings.relayUrl && !settings.localListener.enabled
+    if (!startedByLogin() && unconfigured) showWindow()
     else if (process.platform === 'darwin') app.dock?.hide()
 
     ipcMain.handle('app:state', () => snapshot())
@@ -326,10 +339,12 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('alarm:ack', () => acknowledge())
     ipcMain.handle('window:hide', () => window?.hide())
     ipcMain.handle('app:autostart', (_event, enabled: boolean) => {
-      app.setLoginItemSettings({ openAtLogin: enabled, openAsHidden: true })
-      return app.getLoginItemSettings().openAtLogin
+      app.setLoginItemSettings({ openAtLogin: enabled, args: AUTOSTART_ARGS })
+      return app.getLoginItemSettings({ args: AUTOSTART_ARGS }).openAtLogin
     })
-    ipcMain.handle('app:autostart-state', () => app.getLoginItemSettings().openAtLogin)
+    ipcMain.handle('app:autostart-state', () =>
+      app.getLoginItemSettings({ args: AUTOSTART_ARGS }).openAtLogin
+    )
   })
 
   app.on('window-all-closed', () => {

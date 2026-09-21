@@ -52,6 +52,20 @@ npm run dev:desktop
 
 Typprüfung über alle Pakete: `npm run typecheck`
 
+## Hintergrundbetrieb und Autostart
+
+Die App ist als Tray-Begleiter gebaut: Sie startet ohne Fenster, das Schliessen
+des Fensters beendet sie nicht, und nur ein Alarm holt sie nach vorn.
+
+- **macOS:** `LSUIElement` ist gesetzt, die App laeuft also als Agent ohne
+  Dock-Icon und ohne Eintrag im App-Umschalter. Sobald ein Fenster gebraucht
+  wird (Alarm oder Tray-Klick), blendet sie das Dock-Icon selbst ein.
+- **Autostart** aktivierst du in den Einstellungen. Registriert wird der Start
+  mit dem Argument `--hidden`; zusammen mit `wasOpenedAtLogin` erkennt die App
+  den Login-Start und bleibt dann garantiert unsichtbar.
+- Ohne Konfiguration zeigt sie beim **manuellen** Start das Fenster, damit man
+  Relay-URL und Token eintragen kann - beim Autostart auch dann nicht.
+
 ## Pakete bauen
 
 ```bash
