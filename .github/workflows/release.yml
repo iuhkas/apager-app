@@ -1,0 +1,68 @@
+name: Pakete bauen
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            name: macOS
+            args: --mac --arm64 --x64
+          - os: windows-latest
+            name: Windows
+            args: --win --x64
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: App bauen
+        run: npm run build -w @apager/desktop
+
+      - name: Paket schnueren
+        working-directory: packages/desktop
+        run: npx --no-install electron-builder ${{ matrix.args }} --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            packages/desktop/release/*.dmg
+            packages/desktop/release/*.zip
+            packages/desktop/release/*.exe
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: pakete
+
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "aPager Monitor ${GITHUB_REF_NAME}" \
+            --notes "Installer fuer Windows (.exe) und macOS (.dmg). Beide sind unsigniert: Windows zeigt eine SmartScreen-Warnung, macOS verlangt beim ersten Start Rechtsklick und Oeffnen." \
+            $(find pakete -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \))
