@@ -103,8 +103,19 @@ function accept(event: AlarmEvent): 'accepted' | 'duplicate' {
   return 'accepted'
 }
 
-const app = Fastify({ logger: true })
+// Der Healthcheck laeuft alle 30 Sekunden und wuerde das Log zuschuetten,
+// deshalb kein automatisches Request-Logging, sondern eine kompakte Zeile
+// pro echtem Aufruf.
+const app = Fastify({ logger: true, disableRequestLogging: true })
 await app.register(websocket)
+
+app.addHook('onResponse', async (request, reply) => {
+  if (request.url.startsWith('/health')) return
+  request.log.info(
+    { method: request.method, url: request.url, status: reply.statusCode, ip: request.ip },
+    'anfrage'
+  )
+})
 
 app.get('/health', async () => ({
   status: 'ok',
