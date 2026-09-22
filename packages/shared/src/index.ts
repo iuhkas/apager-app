@@ -120,3 +120,19 @@ export const DEFAULT_INGEST_HEADER = 'x-apager-token'
  * Entwarnung, deshalb braucht es diese Grenze.
  */
 export const ALARM_FRESH_WINDOW_MS = 5 * 60_000
+
+/**
+ * Stand des Einsatzbandes auf der Feuerwehr-Website.
+ *
+ * Liegt hier, weil ihn drei Seiten brauchen: der Relay erzeugt ihn, der
+ * Main-Prozess reicht ihn durch, die Oberflaeche zeigt ihn an.
+ */
+export interface WebsiteStatus {
+  /** Falsch, wenn Relay oder Website nicht eingerichtet sind - dann blendet
+   *  die Oberflaeche den ganzen Bereich aus. */
+  configured: boolean
+  status?: 'laeuft' | 'aus'
+  seit?: string
+  bis?: string
+  error?: string
+}

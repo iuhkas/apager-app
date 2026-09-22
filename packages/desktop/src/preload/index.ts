@@ -9,6 +9,8 @@ const api = {
   hideWindow: () => ipcRenderer.invoke('window:hide'),
   getAutostart: () => ipcRenderer.invoke('app:autostart-state'),
   setAutostart: (enabled: boolean) => ipcRenderer.invoke('app:autostart', enabled),
+  websiteStatus: () => ipcRenderer.invoke('website:status'),
+  websiteEntwarnung: () => ipcRenderer.invoke('website:entwarnung'),
   onState: (handler: (state: unknown) => void) => {
     const listener = (_event: unknown, state: unknown): void => handler(state)
     ipcRenderer.on('state', listener)

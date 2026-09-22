@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { AlarmEvent } from '@apager/shared'
+import type { AlarmEvent, WebsiteStatus } from '@apager/shared'
 import type { Settings } from '../../main/config'
 import { playAlarmSound } from './alarm-sound'
 
@@ -22,6 +22,8 @@ declare global {
       hideWindow: () => Promise<void>
       getAutostart: () => Promise<boolean>
       setAutostart: (enabled: boolean) => Promise<boolean>
+      websiteStatus: () => Promise<WebsiteStatus>
+      websiteEntwarnung: () => Promise<WebsiteStatus>
       onState: (handler: (state: AppState) => void) => () => void
     }
   }
@@ -129,9 +131,71 @@ export function App(): React.ReactElement | null {
   )
 }
 
+/**
+ * Das Einsatzband der Website.
+ *
+ * aPager sendet keine Entwarnung, deshalb schaltet die Website das Band nach
+ * einigen Stunden von selbst ab. Wer zurueck am Geraetehaus ist, muss darauf
+ * nicht warten - dieser Knopf beendet es sofort.
+ *
+ * Der Bereich erscheint nur, wenn Relay und Website eingerichtet sind, und
+ * der Knopf nur, wenn das Band tatsaechlich laeuft. Ein Knopf, der meistens
+ * nichts tut, waere schlimmer als keiner.
+ */
+function WebsiteBand(): React.ReactElement | null {
+  const [status, setStatus] = useState<WebsiteStatus | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    const laden = (): void => void window.apager.websiteStatus().then(setStatus)
+    laden()
+    const timer = setInterval(laden, 30_000)
+    return () => clearInterval(timer)
+  }, [])
+
+  if (!status?.configured) return null
+
+  if (status.error) {
+    return (
+      <p className="website website--fehler">Einsatzband: {status.error}</p>
+    )
+  }
+
+  if (status.status !== 'laeuft') {
+    return <p className="website">Einsatzband auf der Website: aus.</p>
+  }
+
+  return (
+    <div className="website website--an">
+      <span>
+        Auf der Website läuft das Einsatzband
+        {status.bis && ` · von selbst aus um ${formatClock(status.bis)}`}
+      </span>
+      <button
+        className="primary"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true)
+          void window.apager
+            .websiteEntwarnung()
+            .then(setStatus)
+            .finally(() => setBusy(false))
+        }}
+      >
+        {busy ? 'einen Moment ...' : 'Einsatz beendet'}
+      </button>
+    </div>
+  )
+}
+
+function formatClock(iso: string): string {
+  return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+}
+
 function HistoryView({ history }: { history: AlarmEvent[] }): React.ReactElement {
   return (
     <section>
+      <WebsiteBand />
       <div className="row row--actions">
         <button onClick={() => void window.apager.testAlarm()}>Testalarm auslösen</button>
         <button onClick={() => void window.apager.exportHistory()}>Als CSV exportieren</button>

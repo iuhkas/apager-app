@@ -105,7 +105,42 @@ Das Alarm-Log liegt als Bind-Mount unter `DATA_HOST_DIR` (Standard
 | `GET\|POST /hook/<INGEST_TOKEN>` | Token im Pfad | Rückfallebene ohne Header |
 | `GET /alarms?limit=&since=` | Header `x-apager-client-token` | Historie (auch für Auswertungen) |
 | `GET /ws?token=<CLIENT_TOKEN>` | Query-Token | WebSocket für die Desktop-App |
+| `GET /website/status` | Header `x-apager-client-token` | Laeuft das Einsatzband auf der Website? |
+| `POST /website/entwarnung` | Header `x-apager-client-token` | Einsatzband abschalten ("Einsatz beendet") |
 | `GET /health` | – | Status, verbundene Clients |
+
+## Einsatzband auf der Feuerwehr-Website
+
+Optional meldet der Relay jeden angenommenen Alarm an die Website, die
+daraufhin auf allen Seiten ein Band zeigt. Zwei Werte in der `.env` genuegen:
+
+```bash
+WEBSITE_ALARM_URL=https://ff-jeserig-flaeming.de/api/einsatz/alarm
+WEBSITE_TOKEN=<Schluessel aus der settings.local.php der Website>
+WEBSITE_TICKER_SECONDS=          # leer: die Website entscheidet (3 Std)
+```
+
+Bleibt eines der beiden leer, ist die Anbindung aus — der Relay sagt das beim
+Start.
+
+- **Uebertragen wird nur, DASS alarmiert wurde.** Kein Stichwort, keine
+  Einheit, keine Adresse. In einem Dorf mit zweihundert Einwohnern ist schon
+  "Wohnungsbrand" eine Angabe ueber eine bestimmte Familie.
+- **Nur beim ersten Alarm**, nicht bei den Dubletten der uebrigen Handys
+  derselben Einheit.
+- **Die Alarmierung hat Vorrang.** Der Aufruf laeuft ohne `await` und mit
+  fuenf Sekunden Zeitgrenze; eine langsame oder tote Website aendert nichts an
+  der Antwort, die aPager bekommt, und nichts am Alarm-Log.
+- **Das Band geht von selbst aus** (Vorgabe drei Stunden, hoechstens zwoelf).
+  aPager sendet keine Entwarnung, deshalb darf das Band nicht darauf warten.
+- **Knopf "Einsatz beendet"** in der Desktop-App: wer zurueck am Geraetehaus
+  ist, schaltet das Band sofort ab, statt die drei Stunden abzuwarten. Der
+  Knopf erscheint nur, wenn das Band wirklich laeuft.
+
+Die App spricht dabei nicht direkt mit der Website, sondern ueber den Relay
+(`GET /website/status`, `POST /website/entwarnung`, beide mit
+`CLIENT_TOKEN`) — so liegt der Schluessel der Website nur auf dem Server und
+nicht auf jedem Rechner, auf dem die App installiert ist.
 
 Identische Alarme (mehrere Handys derselben Einheit) werden innerhalb von
 `DEDUPE_WINDOW_SECONDS` zu einem Einsatz zusammengefasst.

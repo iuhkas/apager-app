@@ -287,3 +287,30 @@ input[type='checkbox'] {
   padding: 14px 40px;
   border-radius: 10px;
 }
+
+/* --- Einsatzband der Website --------------------------------------------- */
+.website {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+/* Laeuft das Band, gehoert es ins Auge - es steht ja auch oeffentlich. */
+.website--an {
+  justify-content: space-between;
+  border-color: var(--alarm);
+  color: var(--text);
+}
+
+.website--fehler {
+  border-color: var(--alarm);
+}
+
+.website button {
+  flex: none;
+}

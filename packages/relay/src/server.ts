@@ -5,6 +5,12 @@ import Fastify, { LogController } from 'fastify'
 import websocket from '@fastify/websocket'
 import type { WebSocket } from 'ws'
 import {
+  startWebsiteTicker,
+  stopWebsiteTicker,
+  websiteConfigured,
+  websiteTickerStatus
+} from './website.js'
+import {
   buildAlarmEvent,
   dedupeKey,
   flatten,
@@ -103,6 +109,10 @@ function accept(event: AlarmEvent): 'accepted' | 'duplicate' {
   return 'accepted'
 }
 
+if (!websiteConfigured) {
+  console.info('Website-Anbindung aus (WEBSITE_ALARM_URL/WEBSITE_TOKEN nicht gesetzt).')
+}
+
 // Der Healthcheck des Containers laeuft alle 30 Sekunden und wuerde das Log
 // zuschuetten - fuer ihn bleibt das Request-Logging aus, fuer alles andere an.
 const app = Fastify({
@@ -138,17 +148,35 @@ app.route({
     const event = buildAlarmEvent(input, { source: 'webhook' })
     const result = accept(event)
 
+    /*
+     * Nur beim ersten Alarm, nicht bei den Dubletten der uebrigen Handys
+     * derselben Einheit. Bewusst ohne await: aPager soll seine Antwort
+     * sofort bekommen, und eine langsame oder tote Website darf die
+     * Alarmierung nicht ausbremsen.
+     */
+    if (result === 'accepted') {
+      void startWebsiteTicker(request.log)
+    }
+
     request.log.info({ event, result }, 'alarm eingegangen')
     return reply.code(200).send({ status: result, id: event.id })
   }
 })
 
+/**
+ * Client-Token aus Kopfzeile oder Query holen - dieselbe Pruefung fuer alle
+ * Strecken, die die Desktop-App benutzt.
+ */
+function clientAuthorized(request: { headers: Record<string, unknown>; query: unknown }): boolean {
+  const header = request.headers['x-apager-client-token']
+  const token = (request.query as { token?: string } | undefined)?.token
+  return tokenMatches(CLIENT_TOKEN, typeof header === 'string' ? header : token)
+}
+
 /** Historie fuer die Desktop-App (Nachladen nach Downtime) und fuer Auswertungen. */
 app.get('/alarms', async (request, reply) => {
   const query = request.query as { token?: string; limit?: string; since?: string }
-  const header = request.headers['x-apager-client-token']
-  const presented = typeof header === 'string' ? header : query.token
-  if (!tokenMatches(CLIENT_TOKEN, presented)) {
+  if (!clientAuthorized(request)) {
     return reply.code(401).send({ error: 'invalid token' })
   }
 
@@ -161,6 +189,27 @@ app.get('/alarms', async (request, reply) => {
     : entries.filter((entry) => Date.parse(entry.receivedAt) > since)
 
   return reply.send({ alarms: filtered.slice(0, limit) })
+})
+
+/*
+ * Einsatzband der Website - fuer den Knopf "Einsatz beendet" in der App.
+ *
+ * Die App geht ueber den Relay und nicht direkt an die Website, damit der
+ * Schluessel der Website nur auf dem Server liegt und nicht auf jedem
+ * Rechner, auf dem die App installiert ist.
+ */
+app.get('/website/status', async (request, reply) => {
+  if (!clientAuthorized(request)) {
+    return reply.code(401).send({ error: 'invalid token' })
+  }
+  return reply.send(await websiteTickerStatus(request.log))
+})
+
+app.post('/website/entwarnung', async (request, reply) => {
+  if (!clientAuthorized(request)) {
+    return reply.code(401).send({ error: 'invalid token' })
+  }
+  return reply.send(await stopWebsiteTicker(request.log))
 })
 
 app.get('/ws', { websocket: true }, (socket, request) => {

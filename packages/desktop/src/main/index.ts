@@ -16,6 +16,7 @@ import {
   buildAlarmEvent,
   dedupeKey,
   isAlarmEvent,
+  type WebsiteStatus,
   type AlarmEvent
 } from '@apager/shared'
 import { loadSettings, saveSettings, type Settings } from './config'
@@ -197,12 +198,51 @@ function raiseAlarm(event: AlarmEvent): void {
   pushState()
 }
 
-async function backfill(): Promise<void> {
-  if (!settings.relayUrl || !settings.clientToken) return
+/**
+ * HTTP-Adresse einer Relay-Strecke aus der WebSocket-URL ableiten.
+ * Eingestellt wird nur "wss://relay.example.de/ws"; alles andere haengt
+ * daran.
+ */
+function relayHttpUrl(weg: string): URL | null {
+  if (!settings.relayUrl || !settings.clientToken) return null
   try {
     const url = new URL(settings.relayUrl)
     url.protocol = url.protocol === 'wss:' ? 'https:' : 'http:'
-    url.pathname = url.pathname.replace(/\/ws$/, '/alarms')
+    url.pathname = url.pathname.replace(/\/ws$/, weg)
+    return url
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Den Relay nach dem Einsatzband fragen oder es abschalten.
+ *
+ * Die App spricht bewusst nicht direkt mit der Website: deren Schluessel
+ * liegt nur auf dem Server, nicht auf jedem Rechner mit dieser App.
+ */
+async function websiteRequest(method: 'GET' | 'POST', weg: string): Promise<WebsiteStatus> {
+  const url = relayHttpUrl(weg)
+  if (!url) return { configured: false }
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: { 'x-apager-client-token': settings.clientToken },
+      signal: AbortSignal.timeout(10_000)
+    })
+    if (!response.ok) {
+      return { configured: true, error: `Relay antwortete mit ${response.status}` }
+    }
+    return (await response.json()) as WebsiteStatus
+  } catch {
+    return { configured: true, error: 'Relay nicht erreichbar' }
+  }
+}
+
+async function backfill(): Promise<void> {
+  const url = relayHttpUrl('/alarms')
+  if (!url) return
+  try {
     url.searchParams.set('limit', '200')
 
     const response = await fetch(url, {
@@ -351,6 +391,8 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('app:autostart-state', () =>
       app.getLoginItemSettings({ args: AUTOSTART_ARGS }).openAtLogin
     )
+    ipcMain.handle('website:status', () => websiteRequest('GET', '/website/status'))
+    ipcMain.handle('website:entwarnung', () => websiteRequest('POST', '/website/entwarnung'))
   })
 
   app.on('window-all-closed', () => {
