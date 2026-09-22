@@ -136,3 +136,15 @@ export interface WebsiteStatus {
   bis?: string
   error?: string
 }
+
+/**
+ * Stand des Autostarts.
+ *
+ * macOS meldet ueber status, warum eine Registrierung nicht greift -
+ * ohne das springt der Haken in den Einstellungen wortlos zurueck.
+ * Moegliche Werte: enabled, requires-approval, not-registered, not-found.
+ */
+export interface AutostartState {
+  enabled: boolean
+  status?: string
+}

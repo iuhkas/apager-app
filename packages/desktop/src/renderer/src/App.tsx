@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { AlarmEvent, WebsiteStatus } from '@apager/shared'
+import type { AlarmEvent, AutostartState, WebsiteStatus } from '@apager/shared'
 import type { Settings } from '../../main/config'
 import { playAlarmSound } from './alarm-sound'
 
@@ -20,8 +20,9 @@ declare global {
       exportHistory: () => Promise<void>
       acknowledge: () => Promise<void>
       hideWindow: () => Promise<void>
-      getAutostart: () => Promise<boolean>
-      setAutostart: (enabled: boolean) => Promise<boolean>
+      getAutostart: () => Promise<AutostartState>
+      setAutostart: (enabled: boolean) => Promise<AutostartState>
+      openLoginItems: () => Promise<void>
       websiteStatus: () => Promise<WebsiteStatus>
       websiteEntwarnung: () => Promise<WebsiteStatus>
       onState: (handler: (state: AppState) => void) => () => void
@@ -221,9 +222,46 @@ function HistoryView({ history }: { history: AlarmEvent[] }): React.ReactElement
   )
 }
 
+/**
+ * Warum der Autostart nicht greift.
+ *
+ * macOS registriert Anmeldeobjekte ueber den Service-Manager. Der verlangt
+ * entweder eine Freigabe in den Systemeinstellungen oder lehnt ganz ab,
+ * wenn das Programm nicht signiert ist. Ohne diesen Hinweis sprang der
+ * Haken wortlos zurueck und es sah nach einem Fehler der App aus.
+ */
+function AutostartHinweis({ stand }: { stand: AutostartState }): React.ReactElement | null {
+  if (stand.enabled || !stand.status) return null
+
+  if (stand.status === 'requires-approval') {
+    return (
+      <p className="hint">
+        macOS wartet auf deine Freigabe.{' '}
+        <button className="link" onClick={() => void window.apager.openLoginItems()}>
+          Anmeldeobjekte öffnen
+        </button>
+      </p>
+    )
+  }
+
+  if (stand.status === 'not-registered' || stand.status === 'not-found') {
+    return (
+      <p className="hint">
+        macOS hat den Eintrag abgelehnt – das passiert bei Programmen ohne
+        Signatur. Du kannst die App stattdessen von Hand hinzufügen:{' '}
+        <button className="link" onClick={() => void window.apager.openLoginItems()}>
+          Anmeldeobjekte öffnen
+        </button>
+      </p>
+    )
+  }
+
+  return null
+}
+
 function SettingsView({ settings }: { settings: Settings }): React.ReactElement {
   const [draft, setDraft] = useState<Settings>(settings)
-  const [autostart, setAutostart] = useState(false)
+  const [autostart, setAutostart] = useState<AutostartState>({ enabled: false })
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
@@ -333,13 +371,14 @@ function SettingsView({ settings }: { settings: Settings }): React.ReactElement 
       <label className="row">
         <input
           type="checkbox"
-          checked={autostart}
+          checked={autostart.enabled}
           onChange={(event) => {
             void window.apager.setAutostart(event.target.checked).then(setAutostart)
           }}
         />
         Beim Systemstart automatisch starten
       </label>
+      <AutostartHinweis stand={autostart} />
 
       <div className="row row--actions">
         <button

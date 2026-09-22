@@ -16,6 +16,7 @@ import {
   buildAlarmEvent,
   dedupeKey,
   isAlarmEvent,
+  type AutostartState,
   type WebsiteStatus,
   type AlarmEvent
 } from '@apager/shared'
@@ -245,6 +246,22 @@ async function websiteRequest(method: 'GET' | 'POST', weg: string): Promise<Webs
   }
 }
 
+/**
+ * Autostart-Stand samt Begruendung.
+ *
+ * macOS registriert Anmeldeobjekte seit 13 ueber den Service-Manager, und
+ * der lehnt unsignierte Programme ab oder verlangt eine Freigabe in den
+ * Systemeinstellungen. Vorher meldete die App in beiden Faellen nur
+ * "aus", und der Haken sprang wortlos zurueck.
+ */
+function autostartState(): AutostartState {
+  const stand = app.getLoginItemSettings({ args: AUTOSTART_ARGS })
+  return {
+    enabled: stand.openAtLogin,
+    status: process.platform === 'darwin' ? stand.status : undefined
+  }
+}
+
 async function backfill(): Promise<void> {
   const url = relayHttpUrl('/alarms')
   if (!url) return
@@ -392,10 +409,14 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('window:hide', () => window?.hide())
     ipcMain.handle('app:autostart', (_event, enabled: boolean) => {
       app.setLoginItemSettings({ openAtLogin: enabled, args: AUTOSTART_ARGS })
-      return app.getLoginItemSettings({ args: AUTOSTART_ARGS }).openAtLogin
+      return autostartState()
     })
-    ipcMain.handle('app:autostart-state', () =>
-      app.getLoginItemSettings({ args: AUTOSTART_ARGS }).openAtLogin
+    ipcMain.handle('app:autostart-state', () => autostartState())
+    // Direkt zu den Anmeldeobjekten, wenn macOS eine Freigabe verlangt.
+    ipcMain.handle('app:open-login-items', () =>
+      shell.openExternal(
+        'x-apple.systempreferences:com.apple.LoginItems-Settings.extension'
+      )
     )
     ipcMain.handle('website:status', () => websiteRequest('GET', '/website/status'))
     ipcMain.handle('website:entwarnung', () => websiteRequest('POST', '/website/entwarnung'))

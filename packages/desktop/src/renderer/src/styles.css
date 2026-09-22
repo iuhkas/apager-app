@@ -314,3 +314,17 @@ input[type='checkbox'] {
 .website button {
   flex: none;
 }
+
+/* Verweis-artiger Knopf im Fliesstext eines Hinweises. */
+button.link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+button.link:hover {
+  border: none;
+}
