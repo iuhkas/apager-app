@@ -123,6 +123,19 @@ WEBSITE_TICKER_SECONDS=          # leer: die Website entscheidet (3 Std)
 Bleibt eines der beiden leer, ist die Anbindung aus — der Relay sagt das beim
 Start.
 
+Liegen Relay und Website auf demselben Server im selben Docker-Netz, ist der
+direkte Weg besser:
+
+```bash
+WEBSITE_API_URL=http://ffjeserig-web/api/einsatz
+WEBSITE_HOST=ff-jeserig-flaeming.de
+```
+
+Kein Umweg ueber den Edge-Proxy, kein TLS-Handschlag — und vor allem kein
+Basic-Auth-Schutz, der eine noch nicht veroeffentlichte Seite abschirmt.
+Drupal braucht dafuer den Host-Kopf, sonst antwortet es unter dem
+Containernamen mit 400.
+
 - **Uebertragen wird nur, DASS alarmiert wurde.** Kein Stichwort, keine
   Einheit, keine Adresse. In einem Dorf mit zweihundert Einwohnern ist schon
   "Wohnungsbrand" eine Angabe ueber eine bestimmte Familie.

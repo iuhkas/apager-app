@@ -18,6 +18,17 @@ import type { WebsiteStatus } from '@apager/shared'
 /** Basis der Strecken, ohne abschliessenden Schraegstrich. */
 const API = (process.env.WEBSITE_API_URL ?? '').replace(/\/+$/, '')
 const TOKEN = process.env.WEBSITE_TOKEN ?? ''
+/*
+ * Host-Kopfzeile, wenn die Website containerintern angesprochen wird.
+ *
+ * Auf dem Server liegen Relay und Website im selben Docker-Netz. Der Aufruf
+ * geht deshalb direkt an den Webcontainer statt ueber die oeffentliche
+ * Adresse: kein Umweg durch den Edge-Proxy, kein TLS-Handschlag, und vor
+ * allem kein Basic-Auth-Schutz, der die Seite waehrend des Aufbaus
+ * abschirmt. Drupal braucht dafuer aber den richtigen Host - unter dem
+ * Containernamen antwortet es mit 400.
+ */
+const HOST = process.env.WEBSITE_HOST ?? ''
 const TICKER_SECONDS = Number(process.env.WEBSITE_TICKER_SECONDS ?? 0)
 const TIMEOUT_MS = 5000
 
@@ -31,6 +42,7 @@ async function ruf(
     ...init,
     headers: {
       authorization: `Bearer ${TOKEN}`,
+      ...(HOST ? { host: HOST } : {}),
       ...(init.headers ?? {})
     },
     signal: AbortSignal.timeout(TIMEOUT_MS)
