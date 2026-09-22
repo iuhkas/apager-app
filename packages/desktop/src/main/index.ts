@@ -230,6 +230,12 @@ async function websiteRequest(method: 'GET' | 'POST', weg: string): Promise<Webs
       headers: { 'x-apager-client-token': settings.clientToken },
       signal: AbortSignal.timeout(10_000)
     })
+    /*
+     * Ein aelterer Relay kennt die Strecke nicht. Dann ist die Anbindung
+     * schlicht nicht vorhanden - das ist kein Fehler, den der Anwender
+     * sehen muesste, also blendet die Oberflaeche den Bereich aus.
+     */
+    if (response.status === 404) return { configured: false }
     if (!response.ok) {
       return { configured: true, error: `Relay antwortete mit ${response.status}` }
     }
